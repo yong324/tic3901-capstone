@@ -24,7 +24,7 @@ const LoginPage = () => {
           if (response.ok) {
               setError(`Login successful! Role: ${data.role}, Customer ID: ${data.customers_id}`);
               // Optionally redirect or handle post-login logic
-              window.location.href = "/dashboard";
+              window.location.href = "/landingpage";
           } else {
               setError(data.message);
           }
