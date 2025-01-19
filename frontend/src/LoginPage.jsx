@@ -11,7 +11,7 @@ const LoginPage = () => {
       e.preventDefault();
 
       try {
-          const response = await fetch('http://localhost:5173/login', {
+          const response = await fetch('http://localhost:5000/login', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -22,15 +22,15 @@ const LoginPage = () => {
           const data = await response.json();
 
           if (response.ok) {
-              setMessage(`Login successful! Role: ${data.role}, Customer ID: ${data.customers_id}`);
+              setError(`Login successful! Role: ${data.role}, Customer ID: ${data.customers_id}`);
               // Optionally redirect or handle post-login logic
               window.location.href = "/dashboard";
           } else {
-              setMessage(data.message);
+              setError(data.message);
           }
       } catch (error) {
           console.error('Error:', error);
-          setMessage('An error occurred. Please try again later.');
+          setError('An error occurred. Please try again later.');
       }
   };
 
