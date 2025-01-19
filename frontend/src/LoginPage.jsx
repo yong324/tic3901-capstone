@@ -7,7 +7,35 @@ const LoginPage = () => {
     const [error, setError] = useState('')
     const navigate = useNavigate(); 
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
+      e.preventDefault();
+
+      try {
+          const response = await fetch('http://localhost:5173/login', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ username, password }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+              setMessage(`Login successful! Role: ${data.role}, Customer ID: ${data.customers_id}`);
+              // Optionally redirect or handle post-login logic
+              window.location.href = "/dashboard";
+          } else {
+              setMessage(data.message);
+          }
+      } catch (error) {
+          console.error('Error:', error);
+          setMessage('An error occurred. Please try again later.');
+      }
+  };
+
+
+    /*const handleLogin = (e) => {
         e.preventDefault();
 
         if (username == 'username' && password == 'password') {
@@ -15,7 +43,7 @@ const LoginPage = () => {
         } else {
             setError('Invalid Username or Password');
         }
-    };
+    };*/
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
