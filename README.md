@@ -13,3 +13,10 @@ first time starting back end
   
 to start back end
   flask run
+
+
+docker commands
+open docker desktop application
+- docker compose commands
+  - open git bash and run following command:
+    - docker-compose up --build
