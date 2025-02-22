@@ -29,6 +29,7 @@ class ClientMetadata(db.Model):
     permissions = db.Column(db.String(255))
     added_datetime = db.Column(db.TIMESTAMP, default=db.func.current_timestamp())
     email = db.Column(db.String(255), nullable=False)
+    sftp_records = db.relationship('ClientSftpMetadata', backref='client', cascade="all, delete")
 
 class ClientSftpMetadata(db.Model):
     __tablename__ = 'client_sftp_metadata'
@@ -177,6 +178,28 @@ def update_client(client_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Failed to update client", "error": str(e)}), 500
+    
+@app.route('/client/<int:client_id>', methods=['DELETE'])
+def delete_client(client_id):
+    # Retrieve the client record from client_metadata
+    client = ClientMetadata.query.get(client_id)
+    if not client:
+        return jsonify({"message": "Client not found"}), 404
+
+    # Optionally, delete the associated SFTP metadata record
+    sftp_record = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
+    if sftp_record:
+        db.session.delete(sftp_record)
+    
+    # Delete the client metadata record
+    db.session.delete(client)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Client deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to delete client", "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
