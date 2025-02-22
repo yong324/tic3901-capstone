@@ -144,11 +144,11 @@ const EditClientPage = () => {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   width:
-                    index === 0 ? '10%' :
+                    index === 0 ? '5%' :
                     index === 1 ? '10%' :
-                    index === 2 ? '15%' :
+                    index === 2 ? '10%' :
                     index === 3 ? '10%' :
-                    index === 4 ? '20%' : '10%', // Adjusted widths
+                    index === 4 ? '15%' : '10%', // Adjusted widths
                 }}
               >
                 {header}
