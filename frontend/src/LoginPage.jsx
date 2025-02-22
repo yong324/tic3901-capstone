@@ -22,7 +22,7 @@ const LoginPage = () => {
           const data = await response.json();
 
           if (response.ok) {
-              setError(`Login successful! Role: ${data.role}, Customer ID: ${data.customers_id}`);
+              setError(`Login successful! Role: ${data.role}, Username: ${data.username}`);
               // Optionally redirect or handle post-login logic
               window.location.href = "/landingpage";
           } else {

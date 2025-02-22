@@ -2,29 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
-  const navigate = useNavigate(); 
-  const [customers, setCustomers] = useState([]); // State to store customer data
-  const [error, setError] = useState(''); // State to store error messages
+  const navigate = useNavigate();
+  const [clients, setClients] = useState([]); // Renamed state variable to clients
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/customers'); // Adjust URL to your API endpoint
+        const response = await fetch('http://localhost:5000/client_metadata'); // Updated endpoint
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
         }
 
         const data = await response.json();
-        setCustomers(data); // Update customers state with the fetched data
+        setClients(data); // Update state with the fetched client metadata
       } catch (err) {
         console.error(err);
-        setError('Failed to fetch customers. Please try again later.');
+        setError('Failed to fetch clients. Please try again later.');
       }
     };
 
-    fetchCustomers();
-  }, []); // Empty dependency array to run only once on component mount
+    fetchClients();
+  }, []);
 
   const onBoardClient = (e) => {
     e.preventDefault();
@@ -59,30 +59,30 @@ const LandingPage = () => {
         <button>Delete existing client</button>
       </form>
 
-      <h2 style={{ marginTop: '40px' }}>Customer List</h2>
+      <h2 style={{ marginTop: '40px' }}>Client List</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {customers.length > 0 ? (
+      {clients.length > 0 ? (
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Name</th>
+              <th>Client ID</th>
+              <th>Client Name</th>
               <th>Email</th>
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer) => (
-              <tr key={customer.id}>
-                <td>{customer.id}</td>
-                <td>{customer.name}</td>
-                <td>{customer.email}</td>
+            {clients.map((client) => (
+              <tr key={client.client_id}>
+                <td>{client.client_id}</td>
+                <td>{client.client_name}</td>
+                <td>{client.email}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <p>Loading customers...</p>
+        <p>Loading clients...</p>
       )}
     </div>
   );
