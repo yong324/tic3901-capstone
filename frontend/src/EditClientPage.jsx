@@ -10,23 +10,18 @@ const EditClientPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const clientNameInputRef = useRef(null);
 
-  // Focus on the client name input when edit mode is enabled
   useEffect(() => {
     if (editingClientId !== null && clientNameInputRef.current) {
       clientNameInputRef.current.focus();
     }
   }, [editingClientId]);
 
-  // Fetch all client metadata from backend
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/client_metadata'); // Update URL if needed
-        if (!response.ok) {
-          throw new Error('Failed to fetch client data');
-        }
-        const data = await response.json();
-        setClients(data);
+        const response = await fetch('http://localhost:5000/client_metadata');
+        if (!response.ok) throw new Error('Failed to fetch client data');
+        setClients(await response.json());
       } catch (err) {
         setError(err.message);
       }
@@ -35,130 +30,130 @@ const EditClientPage = () => {
     fetchClients();
   }, []);
 
-  // Handler when clicking the Edit button
+  const setNotification = (success = '', err = '') => {
+    setSuccessMessage(success);
+    setError(err);
+  };
+
   const handleEditClick = (client) => {
     setEditingClientId(client.client_id);
     setEditedClient({ ...client });
-    setError('');
-    setSuccessMessage('');
+    setNotification();
   };
 
-  // Handler for input changes in the editing row
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditedClient((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleInputChange = ({ target: { name, value } }) => {
+    setEditedClient((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handler to save the edited client data with a confirmation alert
+  const isDuplicateClientName = (client_id) => {
+    const duplicate = clients.find(
+      (client) =>
+        client.client_name === editedClient.client_name &&
+        client.client_id !== client_id
+    );
+    if (duplicate) {
+      setError('Failed to edit: Client name must be unique. This client name already exists.');
+      return true;
+    }
+    return false;
+  };
+
+  const apiCall = async (url, method, body = null) => {
+    const options = {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || errorData.message || 'Operation failed');
+    }
+    return response.json();
+  };
+
   const handleSaveClick = async (client_id) => {
-    // Check for duplicate client name in the local state
-    if (editedClient.client_name) {
-      const duplicate = clients.find(
-        (client) =>
-          client.client_name === editedClient.client_name &&
-          client.client_id !== client_id
-      );
-      if (duplicate) {
-        setError("Failed to edit: Client name must be unique. This client name already exists.");
-        return; // Do not send the PUT request if duplicate exists
-      }
-    }
-
-    // Confirmation alert before saving changes
-    if (!window.confirm("Are you sure you want to save the changes?")) {
-      return;
-    }
+    if (isDuplicateClientName(client_id)) return;
+    if (!window.confirm('Are you sure you want to save the changes?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/client/${client_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editedClient),
-      });
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { error: await response.text() };
-        }
-        throw new Error(
-          errorData.error || errorData.message || 'Failed to update client data'
-        );
-      }
-      // Update local state with new data
-      setClients((prevClients) =>
-        prevClients.map((client) =>
-          client.client_id === client_id ? editedClient : client
-        )
+      await apiCall(`http://localhost:5000/client/${client_id}`, 'PUT', editedClient);
+      setClients((prev) =>
+        prev.map((client) => (client.client_id === client_id ? editedClient : client))
       );
       setEditingClientId(null);
-      setSuccessMessage("Client updated successfully!");
-      setError('');
+      setNotification('Client updated successfully!');
     } catch (err) {
-      setError("Failed to edit: " + err.message);
+      setError(`Failed to edit: ${err.message}`);
     }
   };
 
-  // Handler to cancel editing
   const handleCancelClick = () => {
     setEditingClientId(null);
     setEditedClient({});
-    setError('');
-    setSuccessMessage('');
+    setNotification();
   };
 
-  // Handler to delete a client record with a confirmation alert
   const handleDeleteClick = async (client_id) => {
-    // Confirmation alert before deleting
-    if (!window.confirm("Are you sure you want to delete this client?")) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this client?')) return;
 
-    setError('');
-    setSuccessMessage('');
     try {
-      const response = await fetch(`http://localhost:5000/client/${client_id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { error: await response.text() };
-        }
-        throw new Error(
-          errorData.error || errorData.message || 'Failed to delete client data'
-        );
-      }
-      // Remove deleted client from local state
-      setClients((prevClients) =>
-        prevClients.filter((client) => client.client_id !== client_id)
-      );
-      setSuccessMessage("Client deleted successfully!");
+      await apiCall(`http://localhost:5000/client/${client_id}`, 'DELETE');
+      setClients((prev) => prev.filter((client) => client.client_id !== client_id));
+      setNotification('Client deleted successfully!');
     } catch (err) {
-      setError("Failed to delete: " + err.message);
+      setError(`Failed to delete: ${err.message}`);
     }
   };
+
+  const renderInputOrText = (client, fieldName, type = 'text') => (
+    editingClientId === client.client_id ? (
+      <input
+        type={type}
+        name={fieldName}
+        ref={fieldName === 'client_name' ? clientNameInputRef : null}
+        value={editedClient[fieldName] || ''}
+        onChange={handleInputChange}
+        style={{ width: '100%', padding: '5px', boxSizing: 'border-box', whiteSpace: 'nowrap', overflow: 'hidden' }}
+      />
+    ) : (
+      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {client[fieldName]}
+      </div>
+    )
+  );
 
   return (
-    <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px' }}>
-      <h2>Edit or Delete Client Data</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div style={{ maxWidth: '1000px', margin: 'auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h2 style={{ textAlign: 'center' }}>Edit or Delete Client Data</h2>
+      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+      {successMessage && <p style={{ color: 'green', textAlign: 'center' }}>{successMessage}</p>}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', tableLayout: 'fixed' }}>
         <thead>
           <tr>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Client ID</th>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Client Name</th>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Email</th>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Permissions</th>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Added Datetime</th>
-            <th style={{ border: '1px solid #ccc', padding: '10px' }}>Actions</th>
+            {['Client ID', 'Client Name', 'Email', 'Permissions', 'Added Datetime', 'Actions'].map((header, index) => (
+              <th
+                key={header}
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '10px',
+                  backgroundColor: '#e0e0e0',
+                  color: '#333',
+                  textAlign: 'left',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  width:
+                    index === 0 ? '10%' :
+                    index === 1 ? '10%' :
+                    index === 2 ? '15%' :
+                    index === 3 ? '10%' :
+                    index === 4 ? '20%' : '10%', // Adjusted widths
+                }}
+              >
+                {header}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -166,69 +161,51 @@ const EditClientPage = () => {
             .sort((a, b) => a.client_id - b.client_id)
             .map((client) => (
               <tr key={client.client_id}>
-                <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                  {client.client_id}
-                </td>
-                <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                  {editingClientId === client.client_id ? (
-                    <input
-                      type="text"
-                      name="client_name"
-                      ref={clientNameInputRef}
-                      value={editedClient.client_name || ''}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    client.client_name
-                  )}
-                </td>
-                <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                  {editingClientId === client.client_id ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={editedClient.email || ''}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    client.email
-                  )}
-                </td>
-                <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                  {editingClientId === client.client_id ? (
-                    <input
-                      type="text"
-                      name="permissions"
-                      value={editedClient.permissions || ''}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    client.permissions
-                  )}
-                </td>
-                <td style={{ border: '1px solid #ccc', padding: '10px' }}>
+                <td style={{ border: '1px solid #ccc', padding: '10px', whiteSpace: 'nowrap' }}>{client.client_id}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'client_name')}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'email', 'email')}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'permissions')}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px', whiteSpace: 'nowrap' }}>
                   {new Date(client.added_datetime).toLocaleString()}
                 </td>
                 <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                  {editingClientId === client.client_id ? (
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button type="button" onClick={() => handleSaveClick(client.client_id)}>
-                        Save
-                      </button>
-                      <button type="button" onClick={handleCancelClick}>
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button type="button" onClick={() => handleEditClick(client)}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => handleDeleteClick(client.client_id)}>
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', gap: '5px', whiteSpace: 'nowrap' }}>
+                    {editingClientId === client.client_id ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveClick(client.client_id)}
+                          style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelClick}
+                          style={{ backgroundColor: '#808080', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(client)}
+                          style={{ backgroundColor: '#008CBA', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClick(client.client_id)}
+                          style={{ backgroundColor: '#FF0000', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

@@ -52,11 +52,7 @@ const LandingPage = () => {
       </form>
 
       <form onSubmit={editClient} style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
-        <button>Edit existing client</button>
-      </form>
-
-      <form onSubmit={deleteClient} style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
-        <button>Delete existing client</button>
+        <button>Edit Or Delete existing client</button>
       </form>
 
       <h2 style={{ marginTop: '40px' }}>Client List</h2>

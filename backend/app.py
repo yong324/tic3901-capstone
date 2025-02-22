@@ -3,7 +3,9 @@ import string
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy.exc import IntegrityError
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes and origins
 
@@ -13,7 +15,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# User model
+# ================================
+# Models
+# ================================
 class UserCredentials(db.Model):
     __tablename__ = 'user_credentials'
     user_id = db.Column(db.Integer, primary_key=True)
@@ -38,72 +42,84 @@ class ClientSftpMetadata(db.Model):
     sftp_username = db.Column(db.String(150), nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-# API route for login
+
+# ================================
+# Utility Functions
+# ================================
+def generate_password(client_name):
+    """Generate password with client name like 'client1_xxxx'"""
+    rand_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+    return f"{client_name}_{rand_chars}"
+
+
+def handle_integrity_error(e):
+    """Handle integrity errors (e.g., unique constraint violations)"""
+    if "client_name" in str(e):
+        return {"message": "Client name must be unique."}, 400
+    return {"message": "Database integrity error", "error": str(e)}, 400
+
+
+def get_client_by_id(client_id):
+    """Get client by ID or return 404 error"""
+    client = ClientMetadata.query.get(client_id)
+    if not client:
+        return None, {"message": "Client not found"}, 404
+    return client, None, 200
+
+
+def format_client(client):
+    """Format client data for JSON response"""
+    return {
+        "client_id": client.client_id,
+        "client_name": client.client_name,
+        "permissions": client.permissions,
+        "added_datetime": client.added_datetime.isoformat() if client.added_datetime else None,
+        "email": client.email
+    }
+
+
+# ================================
+# Routes
+# ================================
+
+# Login Route
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    username, password = data.get('username'), data.get('password')
 
-    # Fetch user from the database
     user = UserCredentials.query.filter_by(username=username, password=password).first()
     if user:
         return jsonify({"message": "Login successful", "role": user.role, "user_id": user.user_id}), 200
-    else:
-        return jsonify({"message": "Invalid username or password"}), 401
+    return jsonify({"message": "Invalid username or password"}), 401
 
-# API route for retrieving all client metadata
+
+# Get All Clients
 @app.route('/client_metadata', methods=['GET'])
 def get_client_metadata():
     try:
         clients = ClientMetadata.query.all()
-        clients_list = [
-            {
-                "client_id": client.client_id,
-                "client_name": client.client_name,
-                "permissions": client.permissions,
-                "added_datetime": client.added_datetime.isoformat() if client.added_datetime else None,
-                "email": client.email
-            }
-            for client in clients
-        ]
-        return jsonify(clients_list), 200
+        return jsonify([format_client(client) for client in clients]), 200
     except Exception as e:
         return jsonify({"message": "Failed to fetch client metadata", "error": str(e)}), 500
 
-# Utility function to generate password with client name like "client1_xxxx"
-def generate_password(client_name):
-    # Generate 4 random alphanumeric characters
-    rand_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
-    return f"{client_name}_{rand_chars}"
 
-# API route for adding new client data
+# Add New Client
 @app.route('/client', methods=['POST'])
 def add_client():
     data = request.get_json()
-    client_name = data.get('clientName')
-    client_email = data.get('clientEmail')
-    sftp_username = data.get('sftpUserName')
+    client_name, client_email, sftp_username = data.get('clientName'), data.get('clientEmail'), data.get('sftpUserName')
 
-    if not client_name or not client_email or not sftp_username:
-        return jsonify({"message": "Client Name, Client Email and SFTP Username are required."}), 400
-    
-    # Check if a client with the same name already exists
-    existing_client = ClientMetadata.query.filter_by(client_name=client_name).first()
-    if existing_client:
-        return jsonify({"message": "Client name must be unique. This client name already exists."}), 400
+    if not all([client_name, client_email, sftp_username]):
+        return jsonify({"message": "Client Name, Client Email, and SFTP Username are required."}), 400
 
     try:
-        # Create a new client in client_metadata table
-        new_client = ClientMetadata(
-            client_name=client_name,
-            email=client_email,
-            permissions=''  # set a default permissions value if needed
-        )
+        # Create new client
+        new_client = ClientMetadata(client_name=client_name, email=client_email, permissions='')
         db.session.add(new_client)
-        db.session.flush()  # flush to assign new_client.client_id without committing
+        db.session.flush()
 
-        # Create related record in client_sftp_metadata table
+        # Create related SFTP metadata
         new_sftp = ClientSftpMetadata(
             client_id=new_client.client_id,
             sftp_directory=client_name,
@@ -115,86 +131,64 @@ def add_client():
 
         return jsonify({
             "message": "Client added successfully",
-            "client": {
-                "client_id": new_client.client_id,
-                "client_name": new_client.client_name,
-                "email": new_client.email,
+            "client": format_client(new_client),
+            "sftp": {
                 "sftp_username": new_sftp.sftp_username,
                 "sftp_directory": new_sftp.sftp_directory,
                 "password": new_sftp.password
             }
         }), 201
 
+    except IntegrityError as e:
+        db.session.rollback()
+        return handle_integrity_error(e)
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Failed to add client", "error": str(e)}), 500
 
 
-from sqlalchemy.exc import IntegrityError
-
+# Update Existing Client
 @app.route('/client/<int:client_id>', methods=['PUT'])
 def update_client(client_id):
-    data = request.get_json()
-    
-    # Retrieve the client metadata record
-    client = ClientMetadata.query.get(client_id)
-    if not client:
-        return jsonify({"message": "Client not found"}), 404
+    client, error_response, status_code = get_client_by_id(client_id)
+    if error_response:
+        return jsonify(error_response), status_code
 
-    # Update client_metadata fields if they are provided in the request
+    data = request.get_json()
     if 'client_name' in data:
         client.client_name = data['client_name']
     if 'email' in data:
         client.email = data['email']
     if 'permissions' in data:
         client.permissions = data['permissions']
-    
-    # Optionally, update the related sftp metadata.
+
     sftp = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
     if sftp and 'client_name' in data:
         sftp.sftp_directory = data['client_name']
         if 'sftp_username' in data:
             sftp.sftp_username = data['sftp_username']
-    
+
     try:
         db.session.commit()
-        return jsonify({
-            "message": "Client updated successfully",
-            "client": {
-                "client_id": client.client_id,
-                "client_name": client.client_name,
-                "email": client.email,
-                "permissions": client.permissions,
-                "added_datetime": client.added_datetime.isoformat() if client.added_datetime else None,
-            }
-        }), 200
-    except IntegrityError as ie:
+        return jsonify({"message": "Client updated successfully", "client": format_client(client)}), 200
+
+    except IntegrityError as e:
         db.session.rollback()
-        # If the error is due to the unique constraint on client_name, show a clear message.
-        return jsonify({
-            "message": "Failed to update client",
-            "error": "Client name must be unique. This client name already exists."
-        }), 400
+        return handle_integrity_error(e)
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Failed to update client", "error": str(e)}), 500
-    
+
+
+# Delete Client
 @app.route('/client/<int:client_id>', methods=['DELETE'])
 def delete_client(client_id):
-    # Retrieve the client record from client_metadata
-    client = ClientMetadata.query.get(client_id)
-    if not client:
-        return jsonify({"message": "Client not found"}), 404
-
-    # Optionally, delete the associated SFTP metadata record
-    sftp_record = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
-    if sftp_record:
-        db.session.delete(sftp_record)
-    
-    # Delete the client metadata record
-    db.session.delete(client)
+    client, error_response, status_code = get_client_by_id(client_id)
+    if error_response:
+        return jsonify(error_response), status_code
 
     try:
+        db.session.delete(client)
         db.session.commit()
         return jsonify({"message": "Client deleted successfully"}), 200
     except Exception as e:
@@ -203,4 +197,3 @@ def delete_client(client_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-

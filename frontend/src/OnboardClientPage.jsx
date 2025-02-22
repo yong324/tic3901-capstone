@@ -9,17 +9,33 @@ const OnboardClientPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Update state when input values change
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  // Helper: Update state when input values change
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
+  // Helper: Show notifications
+  const setNotification = (successMsg = '', errorMsg = '') => {
+    setSuccess(successMsg);
+    setError(errorMsg);
+  };
+
+  // Helper: Reusable API call
+  const apiCall = async (url, method, body) => {
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Request failed');
+    return data;
+  };
+
+  // Form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setNotification();
 
     const payload = {
       clientName: formData.clientName,
@@ -28,73 +44,45 @@ const OnboardClientPage = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/client', {  // Updated URL
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to onboard client.');
-        alert(errorData.message || 'Failed to onboard client.');
-      } else {
-        const data = await response.json();
-        setSuccess(data.message);
-        alert(data.message || 'Client added successfully!');
-        // Clear the form after success
-        setFormData({ clientName: '', clientEmail: '', sftpUserName: '' });
-      }
+      const data = await apiCall('http://localhost:5000/client', 'POST', payload);
+      setNotification(data.message); // Inline success message
+      setFormData({ clientName: '', clientEmail: '', sftpUserName: '' }); // Reset form
     } catch (err) {
-      setError('An error occurred while onboarding the client.');
-      alert('An error occurred while onboarding the client.');
+      setNotification('', `Failed to onboard client: ${err.message}`);
     }
   };
 
+  // Helper: Render reusable input field
+  const renderInput = (label, name, type = 'text') => (
+    <>
+      <label htmlFor={name} style={{ display: 'block', marginBottom: '5px' }}>
+        {label}:
+      </label>
+      <input
+        type={type}
+        id={name}
+        name={name}
+        value={formData[name]}
+        onChange={handleChange}
+        style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px' }}
+      />
+    </>
+  );
+
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '15px' }}>
-      <label htmlFor="clientName" style={{ display: 'block', marginBottom: '5px' }}>
-        Client Name:
-      </label>
-      <input
-        type="text"
-        id="clientName"
-        name="clientName"
-        value={formData.clientName}
-        onChange={handleChange}
-        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-      />
+    <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: 'auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h2 style={{ textAlign: 'center' }}>Onboard New Client</h2>
 
-      <label htmlFor="clientEmail" style={{ display: 'block', marginBottom: '5px' }}>
-        Client Email:
-      </label>
-      <input
-        type="email"
-        id="clientEmail"
-        name="clientEmail"
-        value={formData.clientEmail}
-        onChange={handleChange}
-        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-      />
+      {renderInput('Client Name', 'clientName')}
+      {renderInput('Client Email', 'clientEmail', 'email')}
+      {renderInput('SFTP User Name', 'sftpUserName')}
 
-      <label htmlFor="sftpUserName" style={{ display: 'block', marginBottom: '5px' }}>
-        SFTP User Name:
-      </label>
-      <input
-        type="text"
-        id="sftpUserName"
-        name="sftpUserName"
-        value={formData.sftpUserName}
-        onChange={handleChange}
-        style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-      />
-
-      <button type="submit" style={{ marginTop: '10px' }}>
+      <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#4CAF50', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
         Onboard new client
       </button>
 
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green', textAlign: 'center', marginTop: '10px' }}>{success}</p>}
+      {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
     </form>
   );
 };
