@@ -1,3 +1,5 @@
+import random
+import string
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -23,10 +25,17 @@ class UserCredentials(db.Model):
 class ClientMetadata(db.Model):
     __tablename__ = 'client_metadata'
     client_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    client_name = db.Column(db.String(150), nullable=False)
-    permissions = db.Column(db.String(255))  
+    client_name = db.Column(db.String(150), nullable=False, unique=True)
+    permissions = db.Column(db.String(255))
     added_datetime = db.Column(db.TIMESTAMP, default=db.func.current_timestamp())
     email = db.Column(db.String(255), nullable=False)
+
+class ClientSftpMetadata(db.Model):
+    __tablename__ = 'client_sftp_metadata'
+    client_id = db.Column(db.Integer, db.ForeignKey('client_metadata.client_id'), primary_key=True)
+    sftp_directory = db.Column(db.String(150), nullable=False)
+    sftp_username = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
 
 # API route for login
 @app.route('/login', methods=['POST'])
@@ -60,6 +69,64 @@ def get_client_metadata():
         return jsonify(clients_list), 200
     except Exception as e:
         return jsonify({"message": "Failed to fetch client metadata", "error": str(e)}), 500
+
+# Utility function to generate password with client name like "client1_xxxx"
+def generate_password(client_name):
+    # Generate 4 random alphanumeric characters
+    rand_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+    return f"{client_name}_{rand_chars}"
+
+# API route for adding new client data
+@app.route('/client', methods=['POST'])
+def add_client():
+    data = request.get_json()
+    client_name = data.get('clientName')
+    client_email = data.get('clientEmail')
+    sftp_username = data.get('sftpUserName')
+
+    if not client_name or not client_email or not sftp_username:
+        return jsonify({"message": "Client Name, Client Email and SFTP Username are required."}), 400
+    
+    # Check if a client with the same name already exists
+    existing_client = ClientMetadata.query.filter_by(client_name=client_name).first()
+    if existing_client:
+        return jsonify({"message": "Client name must be unique. This client name already exists."}), 400
+
+    try:
+        # Create a new client in client_metadata table
+        new_client = ClientMetadata(
+            client_name=client_name,
+            email=client_email,
+            permissions=''  # set a default permissions value if needed
+        )
+        db.session.add(new_client)
+        db.session.flush()  # flush to assign new_client.client_id without committing
+
+        # Create related record in client_sftp_metadata table
+        new_sftp = ClientSftpMetadata(
+            client_id=new_client.client_id,
+            sftp_directory=client_name,
+            sftp_username=sftp_username,
+            password=generate_password(client_name)
+        )
+        db.session.add(new_sftp)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Client added successfully",
+            "client": {
+                "client_id": new_client.client_id,
+                "client_name": new_client.client_name,
+                "email": new_client.email,
+                "sftp_username": new_sftp.sftp_username,
+                "sftp_directory": new_sftp.sftp_directory,
+                "password": new_sftp.password
+            }
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to add client", "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

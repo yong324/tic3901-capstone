@@ -22,13 +22,13 @@ const OnboardClientPage = () => {
     setSuccess('');
 
     const payload = {
-      name: formData.clientName,
-      email: formData.clientEmail,
+      clientName: formData.clientName,
+      clientEmail: formData.clientEmail,
       sftpUserName: formData.sftpUserName,
     };
 
     try {
-      const response = await fetch('http://localhost:5000/customers', {
+      const response = await fetch('http://localhost:5000/client', {  // Updated URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
