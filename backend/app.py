@@ -128,6 +128,56 @@ def add_client():
         db.session.rollback()
         return jsonify({"message": "Failed to add client", "error": str(e)}), 500
 
+
+from sqlalchemy.exc import IntegrityError
+
+@app.route('/client/<int:client_id>', methods=['PUT'])
+def update_client(client_id):
+    data = request.get_json()
+    
+    # Retrieve the client metadata record
+    client = ClientMetadata.query.get(client_id)
+    if not client:
+        return jsonify({"message": "Client not found"}), 404
+
+    # Update client_metadata fields if they are provided in the request
+    if 'client_name' in data:
+        client.client_name = data['client_name']
+    if 'email' in data:
+        client.email = data['email']
+    if 'permissions' in data:
+        client.permissions = data['permissions']
+    
+    # Optionally, update the related sftp metadata.
+    sftp = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
+    if sftp and 'client_name' in data:
+        sftp.sftp_directory = data['client_name']
+        if 'sftp_username' in data:
+            sftp.sftp_username = data['sftp_username']
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": "Client updated successfully",
+            "client": {
+                "client_id": client.client_id,
+                "client_name": client.client_name,
+                "email": client.email,
+                "permissions": client.permissions,
+                "added_datetime": client.added_datetime.isoformat() if client.added_datetime else None,
+            }
+        }), 200
+    except IntegrityError as ie:
+        db.session.rollback()
+        # If the error is due to the unique constraint on client_name, show a clear message.
+        return jsonify({
+            "message": "Failed to update client",
+            "error": "Client name must be unique. This client name already exists."
+        }), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to update client", "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
 
