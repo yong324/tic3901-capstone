@@ -15,4 +15,14 @@ export default defineConfig({
    host: true,
    origin: "http://0.0.0.0:8080",
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/tests/setup.js', // assuming the test folder is in the root of our project
+  },
+  coverage: {
+    include: ['src/**/*.{js,jsx,ts,tsx}'], // specify files to include
+    exclude: ['src/generated/**/*.ts'],    // specify files to exclude
+    reporter: ['text', 'html']  // customize reporters. don't forget to include 'html' if you use vitest-ui
+  }
  });

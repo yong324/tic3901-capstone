@@ -20,3 +20,7 @@ open docker desktop application
 - docker compose commands
   - open git bash and run following command:
     - docker-compose up --build
+
+run tests
+  frontend:
+    npm run test -- --coverage

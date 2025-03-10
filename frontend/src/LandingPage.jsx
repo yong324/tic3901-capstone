@@ -54,32 +54,6 @@ const LandingPage = () => {
       <form onSubmit={editClient} style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
         <button>Edit Or Delete existing client</button>
       </form>
-
-      <h2 style={{ marginTop: '40px' }}>Client List</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {clients.length > 0 ? (
-        <table border="1" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-          <thead>
-            <tr>
-              <th>Client ID</th>
-              <th>Client Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.client_id}>
-                <td>{client.client_id}</td>
-                <td>{client.client_name}</td>
-                <td>{client.email}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>Loading clients...</p>
-      )}
     </div>
   );
 };

@@ -7,18 +7,19 @@ import OnboardClientPage from './OnboardClientPage';
 import EditClientPage from './EditClientPage';
 import DeleteClientPage from './DeleteClientPage';
 
-const App = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/landingpage" element={<LandingPage />} />
-        <Route path="/onboardclient" element={<OnboardClientPage />} />
-        <Route path="/editclient" element={<EditClientPage />} />
-        <Route path="/deleteclient" element={<DeleteClientPage />} />
-      </Routes>
-    </Router>
+const App = ({ withRouter = true }) => {
+  const AppRoutes = (
+    <Routes>
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/landingpage" element={<LandingPage />} />
+      <Route path="/onboardclient" element={<OnboardClientPage />} />
+      <Route path="/editclient" element={<EditClientPage />} />
+      <Route path="/deleteclient" element={<DeleteClientPage />} />
+    </Routes>
   );
+
+  // Only wrap in Router if withRouter is true
+  return withRouter ? <Router>{AppRoutes}</Router> : AppRoutes;
 };
 
 export default App;

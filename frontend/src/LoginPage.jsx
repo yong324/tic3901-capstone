@@ -35,16 +35,6 @@ const LoginPage = () => {
   };
 
 
-    /*const handleLogin = (e) => {
-        e.preventDefault();
-
-        if (username == 'username' && password == 'password') {
-            navigate('/landingpage')
-        } else {
-            setError('Invalid Username or Password');
-        }
-    };*/
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
           <h1>Login</h1>
