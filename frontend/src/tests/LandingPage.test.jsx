@@ -32,24 +32,37 @@ const renderWithRouter = (component) => {
   );
 };
 
+// Renders a component within Router and wraps it in React's act() for safe async updates
+const renderWithAct = async (component) => {
+  await act(async () => {
+    renderWithRouter(component);
+  });
+};
+
 describe('LandingPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Reset fetch mock default response
+    vi.clearAllMocks();     // Reset fetch mock default response
     fetch.mockReset();
+    fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([])
+    });
   });
 
-  it('renders welcome message and buttons', () => {
+
+  it('renders welcome message and buttons', async () => {
     renderWithRouter(<LandingPage />);
     
-    // Check for welcome messages
-    expect(screen.getByText('You have successfully logged in.')).toBeInTheDocument();
-    expect(screen.getByText('Welcome to AssetProtect onboarding page!')).toBeInTheDocument();
-    expect(screen.getByText('Please select what you\'d like to do')).toBeInTheDocument();
-    
-    // Check for buttons
-    expect(screen.getByText('Onboarding new client')).toBeInTheDocument();
-    expect(screen.getByText('Edit Or Delete existing client')).toBeInTheDocument();
+    await waitFor(() => {
+      // Check for welcome messages
+      expect(screen.getByText('You have successfully logged in.')).toBeInTheDocument();
+      expect(screen.getByText('Welcome to AssetProtect onboarding page!')).toBeInTheDocument();
+      expect(screen.getByText("Please select what you'd like to do")).toBeInTheDocument();
+      
+      // Check for buttons
+      expect(screen.getByText('Onboarding new client')).toBeInTheDocument();
+      expect(screen.getByText('Edit Or Delete existing client')).toBeInTheDocument();
+    });
   });
 
   it('fetches client data on mount', async () => {
@@ -81,19 +94,18 @@ describe('LandingPage', () => {
   });
     */
 
-  it('navigates to onboard client page when clicking onboard button', () => {
-    renderWithRouter(<LandingPage />);
+  it('navigates to onboard client page when clicking onboard button', async () => {
+    await renderWithAct(<LandingPage />);
     
     const onboardButton = screen.getByText('Onboarding new client');
-
-    act (() => fireEvent.click(onboardButton));
-    
-
+    fireEvent.click(onboardButton);
+  
     expect(mockNavigate).toHaveBeenCalledWith('/onboardclient');
   });
+  
 
-  it('navigates to edit client page when clicking edit button', () => {
-    renderWithRouter(<LandingPage />);
+  it('navigates to edit client page when clicking edit button', async () => {
+    await renderWithAct(<LandingPage />);
     
     const editButton = screen.getByText('Edit Or Delete existing client');
     act(() => {fireEvent.click(editButton)});
