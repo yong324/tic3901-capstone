@@ -25,3 +25,6 @@ open docker desktop application
 run tests
   frontend:
     npm run test -- --coverage
+  backend:
+    cd backend
+    pytest
