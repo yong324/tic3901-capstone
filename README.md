@@ -7,11 +7,12 @@ to start front end
 
 first time starting back end
   cd backend
-  virtualenv venv
+  .\venv\Scripts\Activate.ps1
   source venv/script/activate
   pip install -r requirements.txt
   
 to start back end
+  .\venv\Scripts\Activate.ps1
   flask run
 
 
