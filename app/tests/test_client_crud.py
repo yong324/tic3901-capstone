@@ -1,38 +1,3 @@
-
-import pytest
-from app import create_app, db, UserCredentials, ClientMetadata, ClientSftpMetadata
-
-@pytest.fixture
-def test_client():
-    app = create_app({
-        'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False
-    })
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-            user = UserCredentials(username='testuser', password='testpass', role='admin')
-            client_metadata = ClientMetadata(client_name='client1', email='client1@example.com')
-            sftp = ClientSftpMetadata(client_id=1, sftp_directory='client1', sftp_username='sftp_user1', password='client1_abcd')
-            db.session.add_all([user, client_metadata, sftp])
-            db.session.commit()
-        yield client
-        with app.app_context():
-            db.session.remove()
-            db.drop_all()
-            db.engine.dispose()
-
-def test_login_success(test_client):
-    response = test_client.post('/login', json={'username': 'testuser', 'password': 'testpass'})
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'Login successful'
-
-def test_login_failure(test_client):
-    response = test_client.post('/login', json={'username': 'wrong', 'password': 'bad'})
-    assert response.status_code == 401
-    assert 'Invalid' in response.get_json()['message']
-
 def test_get_client_metadata(test_client):
     response = test_client.get('/client_metadata')
     data = response.get_json()
@@ -70,7 +35,7 @@ def test_update_client_success(test_client):
     response = test_client.put('/client/1', json={
         'client_name': 'updated_client1',
         'email': 'updated@example.com',
-        'permissions': 'write',
+        'permissions': 'e',
         'sftp_username': 'updated_sftp_user1'
     })
     assert response.status_code == 200

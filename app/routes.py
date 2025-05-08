@@ -1,105 +1,9 @@
-# app.py
-import random
-import string
-import os
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
+from flask import request, jsonify
 from sqlalchemy.exc import IntegrityError
-from dotenv import load_dotenv
+from app import db
+from app.models import UserCredentials, ClientMetadata, ClientPermissions, ClientSftpMetadata
+from app.utils import generate_password, handle_integrity_error, get_client_by_id, format_client
 
-db = SQLAlchemy()
-
-
-def create_app(test_config=None):
-    load_dotenv()
-
-    app = Flask(__name__)
-    CORS(app)
-
-    if test_config:
-        app.config.update(test_config)
-    else:
-        db_user = os.getenv('DB_USERNAME')
-        db_password = os.getenv('DB_PASSWORD')
-        db_host = os.getenv('DB_HOST')
-        db_port = os.getenv('DB_PORT')
-        db_name = os.getenv('DB_NAME')
-
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
-        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    db.init_app(app)
-    register_routes(app)
-
-    return app
-
-
-# ================================
-# Models
-# ================================
-class UserCredentials(db.Model):
-    __tablename__ = 'user_credentials'
-    user_id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), default='user')
-    created_at = db.Column(db.TIMESTAMP, default=db.func.current_timestamp())
-
-
-class ClientMetadata(db.Model):
-    __tablename__ = 'client_metadata'
-    client_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    client_name = db.Column(db.String(150), nullable=False, unique=True)
-    permissions = db.Column(db.String(255))
-    added_datetime = db.Column(db.TIMESTAMP, default=db.func.current_timestamp())
-    email = db.Column(db.String(255), nullable=False)
-    sftp_records = db.relationship('ClientSftpMetadata', backref='client', cascade="all, delete")
-
-
-class ClientSftpMetadata(db.Model):
-    __tablename__ = 'client_sftp_metadata'
-    client_id = db.Column(db.Integer, db.ForeignKey('client_metadata.client_id'), primary_key=True)
-    sftp_directory = db.Column(db.String(150), nullable=False)
-    sftp_username = db.Column(db.String(150), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-
-
-# ================================
-# Utility Functions
-# ================================
-def generate_password(client_name):
-    rand_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
-    return f"{client_name}_{rand_chars}"
-
-
-def handle_integrity_error(e):
-    if "client_name" in str(e):
-        return {"message": "Client name must be unique."}, 400
-    return {"message": "Database integrity error", "error": str(e)}, 400
-
-
-def get_client_by_id(client_id):
-    client = db.session.get(ClientMetadata, client_id)
-    if not client:
-        return None, {"message": "Client not found"}, 404
-    return client, None, 200
-
-
-
-def format_client(client):
-    return {
-        "client_id": client.client_id,
-        "client_name": client.client_name,
-        "permissions": client.permissions,
-        "added_datetime": client.added_datetime.isoformat() if client.added_datetime else None,
-        "email": client.email
-    }
-
-
-# ================================
-# Routes
-# ================================
 def register_routes(app):
     @app.route('/login', methods=['POST'])
     def login():
@@ -124,14 +28,18 @@ def register_routes(app):
         client_name = data.get('clientName')
         client_email = data.get('clientEmail')
         sftp_username = data.get('sftpUserName')
+        permissions = data.get('permissions', [])
 
         if not all([client_name, client_email, sftp_username]):
             return jsonify({"message": "Client Name, Client Email, and SFTP Username are required."}), 400
 
         try:
-            new_client = ClientMetadata(client_name=client_name, email=client_email, permissions='')
+            new_client = ClientMetadata(client_name=client_name, email=client_email)
             db.session.add(new_client)
             db.session.flush()
+
+            for perm in permissions:
+                db.session.add(ClientPermissions(client_id=new_client.client_id, permission=perm))
 
             new_sftp = ClientSftpMetadata(
                 client_id=new_client.client_id,
@@ -171,7 +79,9 @@ def register_routes(app):
         if 'email' in data:
             client.email = data['email']
         if 'permissions' in data:
-            client.permissions = data['permissions']
+            ClientPermissions.query.filter_by(client_id=client.client_id).delete()
+            for perm in data['permissions']:
+                db.session.add(ClientPermissions(client_id=client.client_id, permission=perm))
 
         sftp = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
         if sftp and 'client_name' in data:
@@ -202,9 +112,3 @@ def register_routes(app):
         except Exception as e:
             db.session.rollback()
             return jsonify({"message": "Failed to delete client", "error": str(e)}), 500
-
-
-# Only used when running locally
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
