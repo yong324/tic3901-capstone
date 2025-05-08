@@ -6,15 +6,14 @@ to start front end
   npm run dev
 
 first time starting back end
-  cd backend
+  cd app
   .\venv\Scripts\Activate.ps1
   source venv/script/activate
   pip install -r requirements.txt
   
-to start back end
+to start backend
   .\venv\Scripts\Activate.ps1
   flask run
-
 
 docker commands
 open docker desktop application
@@ -28,3 +27,9 @@ run tests
   backend:
     cd backend
     pytest
+
+to pytest backend w coverage
+  pytest --cov=app app/tests
+  
+to pytest backend w full html report
+  pytest --cov=app --cov-report=html
