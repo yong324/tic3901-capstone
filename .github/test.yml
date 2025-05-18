@@ -3,17 +3,14 @@ name: Run Backend and Frontend Tests
 on:
   push:
     branches:
-      - main
+      - dev
   pull_request:
     branches:
-      - main
+      - dev
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    env:
-      FLASK_ENV: testing
 
     steps:
       - name: Checkout code
