@@ -8,7 +8,7 @@ response = s3.get_object(Bucket="tic4303-capstone", Key="config/dbconfig.json")
 config_data = response['Body'].read().decode('utf-8')
 CONFIG = json.loads(config_data)
 
-def get_latest_input_data_filename(bucket_name, prefix):
+def get_latest_input(bucket_name, prefix):
     # Retrieve the list of objects
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
     
@@ -20,15 +20,43 @@ def get_latest_input_data_filename(bucket_name, prefix):
 
     return latest_object_location
 
-def read_latest_file_to_rds(latest_object_location):
+def fetch_query():
     #establish connection to rds
-    db_host = CONFIG["DB_HOST"]
+	db_host = CONFIG["DB_HOST"]
     db_port = CONFIG["DB_PORT"]
     db_name = CONFIG["DB_NAME"]
     db_user = CONFIG["DB_USER"]
     db_password = CONFIG["DB_PASSWORD"]
 
-    query = "SELECT aws_s3.table_import_from_s3('input_financial_data','','(format csv, header true)','tic4303-capstone','{file_location}','ap-southeast-1')".format(file_location = latest_object_location)
+    # Establish a connection to the RDS instance
+    try:
+        conn = psycopg2.connect(
+            host=db_host,
+            port=db_port,
+            dbname=db_name,
+            user=db_user,
+            password=db_password
+        )
+        print("successfully connected!")
+        cursor = conn.cursor()
+        cursor.execute("select * from customers limit 1")
+        results = cursor.fetchall()
+        print(results)
+        
+    except Exception as e:
+        print(str(e))
+
+    return
+
+def read_latest_file_to_rds(bucket_name,latest_object_location):
+    #establish connection to rds
+	db_host = CONFIG["DB_HOST"]
+    db_port = CONFIG["DB_PORT"]
+    db_name = CONFIG["DB_NAME"]
+    db_user = CONFIG["DB_USER"]
+    db_password = CONFIG["DB_PASSWORD"]
+
+    query = "SELECT aws_s3.table_import_from_s3('financial_data','','(format csv, header true)','tic4303-capstone','{file_location}','ap-southeast-1')".format(file_location = latest_object_location)
 
     try:
         conn = psycopg2.connect(
@@ -42,6 +70,7 @@ def read_latest_file_to_rds(latest_object_location):
         cursor.execute(query)
         results = cursor.fetchall()
         conn.commit()
+        print(results)
         
     except Exception as e:
         print(str(e))
@@ -49,12 +78,13 @@ def read_latest_file_to_rds(latest_object_location):
     return
 
 def lambda_handler(event, context):
+
     bucket_name = 'tic4303-capstone'
     prefix = 'inputData/'  # Replace with the directory path you want to list
 
-    latest_object_location = get_latest_input_data_filename(bucket_name, prefix)
-    read_latest_file_to_rds(latest_object_location)
+    latest_file = get_latest_input(bucket_name,prefix)
+    read_latest_file_to_rds(bucket_name,latest_file)
 
     return {
-        'statusCode': 200,
+        'statusCode': 200
     }
