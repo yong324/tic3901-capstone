@@ -3,7 +3,7 @@ name: Deploy Lambda to Dev
 on:
   push:
     branches:
-      - dev # Trigger on pushes to the 'dev' branch
+      - dev # Trigger on pushes to the 'dev' branc
 
 jobs:
   deploy:
@@ -30,10 +30,10 @@ jobs:
       - name: Install dependencies for inputCsvToRDS
         run: |
           zip -r function.zip lambda_function.py
-        working-directory: ./inputCsvToRDS # Run commands from the function's directory
+        working-directory: ./awsLambdaFunctions/inputCsvToRDS # Run commands from the function's directory
 
-      - name: Update Lambda function code for my_function_one
+      - name: Update Lambda function code for inputCsvToRDS
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:010928187545:function:inputCsvToRDS \
-            --zip-file fileb://inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
