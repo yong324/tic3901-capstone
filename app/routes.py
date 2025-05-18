@@ -18,7 +18,20 @@ def register_routes(app):
     def get_client_metadata():
         try:
             clients = ClientMetadata.query.all()
-            return jsonify([format_client(client) for client in clients]), 200
+            result = []
+
+            for client in clients:
+                sftp = ClientSftpMetadata.query.filter_by(client_id=client.client_id).first()
+                formatted = format_client(client)
+                if sftp:
+                    formatted['sftp_username'] = sftp.sftp_username
+                    formatted['sftp_directory'] = sftp.sftp_directory
+                else:
+                    formatted['sftp_username'] = ''
+                    formatted['sftp_directory'] = ''
+                result.append(formatted)
+
+            return jsonify(result), 200
         except Exception as e:
             return jsonify({"message": "Failed to fetch client metadata", "error": str(e)}), 500
 
@@ -74,6 +87,7 @@ def register_routes(app):
             return jsonify(error_response), status_code
 
         data = request.get_json()
+        
         if 'client_name' in data:
             client.client_name = data['client_name']
         if 'email' in data:
@@ -84,20 +98,29 @@ def register_routes(app):
                 db.session.add(ClientPermissions(client_id=client.client_id, permission=perm))
 
         sftp = ClientSftpMetadata.query.filter_by(client_id=client_id).first()
-        if sftp and 'client_name' in data:
-            sftp.sftp_directory = data['client_name']
+        if sftp:
+            if 'sftp_directory' in data:
+                sftp.sftp_directory = data['sftp_directory']
             if 'sftp_username' in data:
                 sftp.sftp_username = data['sftp_username']
 
         try:
             db.session.commit()
-            return jsonify({"message": "Client updated successfully", "client": format_client(client)}), 200
+            return jsonify({
+                "message": "Client updated successfully",
+                "client": format_client(client),
+                "sftp": {
+                    "sftp_username": sftp.sftp_username if sftp else None,
+                    "sftp_directory": sftp.sftp_directory if sftp else None
+                }
+            }), 200
         except IntegrityError as e:
             db.session.rollback()
             return handle_integrity_error(e)
         except Exception as e:
             db.session.rollback()
             return jsonify({"message": "Failed to update client", "error": str(e)}), 500
+
 
     @app.route('/client/<int:client_id>', methods=['DELETE'])
     def delete_client(client_id):
