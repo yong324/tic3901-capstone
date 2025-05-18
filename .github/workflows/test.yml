@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run backend tests
-        working-directory: ./backend
+        working-directory: ./app
         run: |
           source venv/bin/activate
           pytest
