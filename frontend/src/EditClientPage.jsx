@@ -123,39 +123,36 @@ const EditClientPage = () => {
     )
   );
 
+  const columnWidths = ['8%', '10%', '18%', '10%', '15%', '13%', '15%', '11%'];
+
   return (
-    <div style={{ maxWidth: '1000px', margin: 'auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+    <div style={{ maxWidth: '1600px', margin: 'auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h2 style={{ textAlign: 'center' }}>Edit or Delete Client Data</h2>
       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
       {successMessage && <p style={{ color: 'green', textAlign: 'center' }}>{successMessage}</p>}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', tableLayout: 'fixed' }}>
-        <thead>
-          <tr>
-            {['Client ID', 'Client Name', 'Email', 'Permissions', 'Added Datetime', 'Actions'].map((header, index) => (
-              <th
-                key={header}
-                style={{
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                  backgroundColor: '#e0e0e0',
-                  color: '#333',
-                  textAlign: 'left',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  width:
-                    index === 0 ? '5%' :
-                    index === 1 ? '10%' :
-                    index === 2 ? '10%' :
-                    index === 3 ? '10%' :
-                    index === 4 ? '15%' : '10%', // Adjusted widths
-                }}
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
+      <thead>
+        <tr>
+          {['Client ID', 'Client Name', 'Email', 'Permissions', 'SFTP Username', 'SFTP Directory', 'Added Datetime', 'Actions'].map((header, index) => (
+            <th
+              key={header}
+              style={{
+                width: columnWidths[index],
+                border: '1px solid #ccc',
+                padding: '10px',
+                backgroundColor: '#e0e0e0',
+                color: '#333',
+                textAlign: 'left',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
         <tbody>
           {[...clients]
             .sort((a, b) => a.client_id - b.client_id)
@@ -165,9 +162,9 @@ const EditClientPage = () => {
                 <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'client_name')}</td>
                 <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'email', 'email')}</td>
                 <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'permissions')}</td>
-                <td style={{ border: '1px solid #ccc', padding: '10px', whiteSpace: 'nowrap' }}>
-                  {new Date(client.added_datetime).toLocaleString()}
-                </td>
+                <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'sftp_username')}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px' }}>{renderInputOrText(client, 'sftp_directory')}</td>
+                <td style={{ border: '1px solid #ccc', padding: '10px', whiteSpace: 'nowrap' }}>{new Date(client.added_datetime).toLocaleString()}</td>
                 <td style={{ border: '1px solid #ccc', padding: '10px' }}>
                   <div style={{ display: 'flex', gap: '5px', whiteSpace: 'nowrap' }}>
                     {editingClientId === client.client_id ? (

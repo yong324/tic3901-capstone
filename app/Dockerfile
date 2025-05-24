@@ -14,5 +14,8 @@ COPY . .
 # Expose the Flask app port
 EXPOSE 5000
 
+# Set the Flask app entry point
+ENV FLASK_APP=run.py
+
 # Run the Flask app
 CMD ["flask", "run","--host=0.0.0.0"]

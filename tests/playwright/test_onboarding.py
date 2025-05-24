@@ -1,8 +1,6 @@
 from playwright.sync_api import sync_playwright
 from utils import login
 
-
-# Test data
 clients = [
     {"client_name": "failTest", "client_email": "", "sftp_user_name": ""},
     {"client_name": "test111", "client_email": "test111@test", "sftp_user_name": "test111@test"},
@@ -21,15 +19,12 @@ clients = [
     {"client_name": "yong", "client_email": "yong@gmail.com", "sftp_user_name": "yong@gmail.com"}
 ]
 
-
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
     page = browser.new_page()
 
-    # Step 1: Login
     login(page)
 
-    # Step 2: Click onboarding button
     page.get_by_role("button", name="Onboarding new client").click()
     page.wait_for_load_state('networkidle')
 
@@ -51,8 +46,8 @@ def run(playwright):
             else:
                 print(f"Unexpected error when adding client '{client['client_name']}'.")
 
-        page.wait_for_timeout(500)  # small wait between test cases
-        page.reload()               # or clear form manually
+        page.wait_for_timeout(500)  
+        page.reload()           
 
     browser.close()
 
