@@ -9,7 +9,7 @@ db = SQLAlchemy()
 def create_app(test_config=None):
     load_dotenv()
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, supports_credentials=True)
 
     if test_config:
         app.config.update(test_config)

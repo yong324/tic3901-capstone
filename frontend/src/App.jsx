@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './LoginPage';
+import RegisterPage from './RegisterPage';
 import LandingPage from './LandingPage';
 import OnboardClientPage from './OnboardClientPage';
 import EditClientPage from './EditClientPage';
@@ -15,6 +16,7 @@ const App = ({ withRouter = true }) => {
       <Route path="/onboardclient" element={<OnboardClientPage />} />
       <Route path="/editclient" element={<EditClientPage />} />
       <Route path="/deleteclient" element={<DeleteClientPage />} />
+      <Route path="/register" element={<RegisterPage />} />
     </Routes>
   );
 

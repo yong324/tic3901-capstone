@@ -1,5 +1,6 @@
 from flask import request, jsonify
 from sqlalchemy.exc import IntegrityError
+import bcrypt
 from app import db
 from app.models import UserCredentials, ClientMetadata, ClientPermissions, ClientSftpMetadata
 from app.utils import generate_password, handle_integrity_error, get_client_by_id, format_client
@@ -8,11 +9,60 @@ def register_routes(app):
     @app.route('/login', methods=['POST'])
     def login():
         data = request.get_json()
-        username, password = data.get('username'), data.get('password')
-        user = UserCredentials.query.filter_by(username=username, password=password).first()
-        if user:
-            return jsonify({"message": "Login successful", "role": user.role, "user_id": user.user_id}), 200
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({"message": "Username and password are required"}), 400
+
+        user = UserCredentials.query.filter_by(username=username).first()
+
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            return jsonify({
+                "message": "Login successful",
+                "role": user.role,
+                "user_id": user.user_id
+            }), 200
+
         return jsonify({"message": "Invalid username or password"}), 401
+
+    @app.route('/register', methods=['POST'])
+    def register():
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        # Basic validation
+        if not username or not password:
+            return jsonify({'message': 'Username and password are required'}), 400
+
+        if len(password) <= 6:
+            return jsonify({'message': 'Password must be more than 6 characters.'}), 400
+
+        try:
+            # Hash the password using bcrypt
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            # Create new user with default role "user"
+            new_user = UserCredentials(
+                username=username,
+                password=hashed_pw,
+                role='user' 
+            )
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            return jsonify({'message': 'User registered successfully'}), 201
+
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'message': 'Username already exists.'}), 409
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Registration failed', 'error': str(e)}), 500
+
 
     @app.route('/client_metadata', methods=['GET'])
     def get_client_metadata():
