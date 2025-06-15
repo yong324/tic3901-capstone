@@ -13,19 +13,8 @@ def get_db_config_from_s3():
     global CONFIG 
     CONFIG = db_config
 
-def get_latest_input_data_filename(bucket_name, prefix):
-    # Retrieve the list of objects
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    
-    # Extract and sort objects by 'LastModified'
-    objects = sorted(response['Contents'], key=lambda obj: obj['LastModified'])
-    
-    # Format the output for each object
-    latest_object_location = objects[-1]['Key']
 
-    return latest_object_location
-
-def read_latest_file_to_rds(latest_object_location):
+def run_data_transformation():
     #establish connection to rds
     db_host = CONFIG["DB_HOST"]
     db_port = CONFIG["DB_PORT"]
@@ -33,7 +22,7 @@ def read_latest_file_to_rds(latest_object_location):
     db_user = CONFIG["DB_USER"]
     db_password = CONFIG["DB_PASSWORD"]
 
-    query = F"SELECT aws_s3.table_import_from_s3('input_financial_data','','(format csv, header true)','{CONFIG['S3_BUCKET']}','{latest_object_location}','ap-southeast-1')"
+    data_transformation_query = "select transform_input()"
 
     try:
         conn = psycopg2.connect(
@@ -44,22 +33,17 @@ def read_latest_file_to_rds(latest_object_location):
             password=db_password
         )
         cursor = conn.cursor()
-        cursor.execute(query)
-        results = cursor.fetchall()
+        cursor.execute(data_transformation_query)
         conn.commit()
         
     except Exception as e:
         print(str(e))
 
-    return
+    return 1
 
 def lambda_handler(event, context):
     get_db_config_from_s3()
-    prefix = 'inputData/'  
-
-    latest_object_location = get_latest_input_data_filename(CONFIG['S3_BUCKET'],prefix)
-    read_latest_file_to_rds(latest_object_location)
-
+    run_data_transformation()
     return {
         'statusCode': 200,
     }
