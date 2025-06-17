@@ -6,6 +6,7 @@ import io
 import boto3
 from datetime import date
 from datetime import datetime
+import os
 
 s3= boto3.client('s3')
 
@@ -50,7 +51,7 @@ def generate_trade_data_csv(num_rows: int = 100):
 
 def write_to_s3(data):
     trade_date = datetime.today().strftime('%Y%m%d')
-    bucket = "tic4303-capstone"
+    bucket = os.environ['BUCKET_NAME']
     key = f"inputData/input_{trade_date}.txt"
 
     csv_buffer = io.StringIO()
