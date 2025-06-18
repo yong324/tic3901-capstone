@@ -36,7 +36,7 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:createDummyDataCSV \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/createDummyDataCSV/function.zip \
 
       - name: Install dependencies for inputCsvToRDS
         run: |
@@ -58,7 +58,7 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:dataTransformation \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/dataTransformation/function.zip \
       
       - name: Install dependencies for outputRDSToCsvS3
         run: |
@@ -69,4 +69,4 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:outputRDSToCsvS3 \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/outputRDSToCsvS3/function.zip \
