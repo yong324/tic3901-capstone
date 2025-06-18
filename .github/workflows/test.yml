@@ -32,9 +32,17 @@ jobs:
           source venv/bin/activate
           pytest
 
+      - name: Install lambda functions unit tests dependencies
+        working-directory: ./awsLambdaFunctions
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
       - name: Run aws lambda functions unit tests
         working-directory: ./awsLambdaFunctions
         run: |
+          source venv/bin/activate
           pytest
 
       # Setup Node.js
