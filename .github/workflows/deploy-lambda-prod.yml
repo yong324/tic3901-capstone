@@ -36,7 +36,7 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:010928187545:function:createDummyDataCSV \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/createDummyDataCSV/function.zip \
 
       - name: Install dependencies for inputCsvToRDS
         run: |
@@ -51,22 +51,22 @@ jobs:
 
       - name: Install dependencies for dataTransformation
         run: |
-          zip -r function.zip lambda_function.py
+          zip -r function.zip data_transformation.py
         working-directory: ./awsLambdaFunctions/dataTransformation # Run commands from the function's directory
 
       - name: Update Lambda function code for dataTransformation
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:010928187545:function:dataTransformation \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/dataTransformation/function.zip \
       
       - name: Install dependencies for outputRDSToCsvS3
         run: |
-          zip -r function.zip lambda_function.py
+          zip -r function.zip output_data_s3.py
         working-directory: ./awsLambdaFunctions/outputRDSToCsvS3 # Run commands from the function's directory
 
       - name: Update Lambda function code for outputRDSToCsvS3
         run: |
           aws lambda update-function-code \
             --function-name arn:aws:lambda:ap-southeast-1:010928187545:function:outputRDSToCsvS3 \
-            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+            --zip-file fileb://awsLambdaFunctions/outputRDSToCsvS3/function.zip \

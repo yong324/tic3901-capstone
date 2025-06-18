@@ -32,6 +32,11 @@ jobs:
           source venv/bin/activate
           pytest
 
+      - name: Run aws lambda functions unit tests
+        working-directory: ./awsLambdaFunctions
+        run: |
+          pytest
+
       # Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
