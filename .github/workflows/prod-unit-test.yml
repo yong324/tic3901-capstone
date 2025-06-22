@@ -1,0 +1,61 @@
+name: Run Backend Frontend, and lambda functions Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install backend dependencies
+        working-directory: ./app
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run backend tests
+        working-directory: ./app
+        run: |
+          source venv/bin/activate
+          pytest
+
+      - name: Install lambda functions unit tests dependencies
+        working-directory: ./awsLambdaFunctions/tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run aws lambda functions unit tests
+        working-directory: ./awsLambdaFunctions/tests
+        run: |
+          source venv/bin/activate
+          pytest
+
+      # Setup Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test 
+        
