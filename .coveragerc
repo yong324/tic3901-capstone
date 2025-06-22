@@ -1,0 +1,12 @@
+[run]
+omit =
+    app/tests/*
+    */test_*.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == "__main__":
+
+[html]
+directory = coverage_html_report

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import LoginPage from '../LoginPage'
 
@@ -75,7 +75,7 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /login/i }))
 
     // Wait for async operations
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith('http://localhost:5000/login', {
         method: 'POST',
         headers: {
@@ -111,7 +111,7 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /login/i }))
 
     // Wait for error message
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
     })
   })

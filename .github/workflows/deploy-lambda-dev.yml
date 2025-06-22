@@ -1,0 +1,72 @@
+name: Deploy Lambda to Dev
+
+on:
+  push:
+    branches:
+      - dev # Trigger on pushes to the 'dev' branc
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # Or a suitable runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Configure AWS Credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.LAMBDA_DEPLOYER_ACCESS_KEY_DEV }} # Use the secret
+          aws-secret-access-key: ${{ secrets.LAMBDA_DEPLOYER_SECRET_ACCESS_KEY_DEV }} # Use the secret
+          aws-region: ${{ secrets.AWS_REGION }} # Use the secret
+
+      # Example for deploying 'my_function_one'
+      - name: Set up Python and install dependencies for lambda functions
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # Use the same Python version as your Lambda
+
+      - name: Install dependencies for createDummyDataCSV
+        run: |
+          zip -r function.zip lambda_function.py
+        working-directory: ./awsLambdaFunctions/createDummyDataCSV # Run commands from the function's directory
+
+      - name: Update Lambda function code for createDummyDataCSV
+        run: |
+          aws lambda update-function-code \
+            --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:createDummyDataCSV \
+            --zip-file fileb://awsLambdaFunctions/createDummyDataCSV/function.zip \
+
+      - name: Install dependencies for inputCsvToRDS
+        run: |
+          zip -r function.zip lambda_function.py
+        working-directory: ./awsLambdaFunctions/inputCsvToRDS # Run commands from the function's directory
+
+      - name: Update Lambda function code for inputCsvToRDS
+        run: |
+          aws lambda update-function-code \
+            --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:inputCsvToRDS \
+            --zip-file fileb://awsLambdaFunctions/inputCsvToRDS/function.zip \
+
+      - name: Install dependencies for dataTransformation
+        run: |
+          zip -r function.zip data_transformation.py
+        working-directory: ./awsLambdaFunctions/dataTransformation # Run commands from the function's directory
+
+      - name: Update Lambda function code for dataTransformation
+        run: |
+          aws lambda update-function-code \
+            --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:dataTransformation \
+            --zip-file fileb://awsLambdaFunctions/dataTransformation/function.zip \
+      
+      - name: Install dependencies for outputRDSToCsvS3
+        run: |
+          zip -r function.zip output_data_s3.py
+        working-directory: ./awsLambdaFunctions/outputRDSToCsvS3 # Run commands from the function's directory
+
+      - name: Update Lambda function code for outputRDSToCsvS3
+        run: |
+          aws lambda update-function-code \
+            --function-name arn:aws:lambda:ap-southeast-1:891377297027:function:outputRDSToCsvS3 \
+            --zip-file fileb://awsLambdaFunctions/outputRDSToCsvS3/function.zip \

@@ -19,6 +19,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/tests/setup.js', // assuming the test folder is in the root of our project
+    coverage: {
+      include: ['src/**/*.{jsx,ts,tsx}'], // specify files to include
+      exclude: ['src/generated/**/*.ts','src/main.jsx'],    // specify files to exclude
+    }
   },
   coverage: {
     include: ['src/**/*.{js,jsx,ts,tsx}'], // specify files to include
