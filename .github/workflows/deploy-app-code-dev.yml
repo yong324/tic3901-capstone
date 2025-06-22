@@ -17,7 +17,7 @@ jobs:
       EC2_USER: ${{ secrets.EC2_USER }}
       # Absolute path to your application's directory on the EC2 instance
       # This is where your docker-compose.yml file and application code reside
-      REMOTE_APP_DIR: /home/${{ secrets.EC2_USER }}/my-docker-app # <-- IMPORTANT: Customize this path
+      REMOTE_APP_DIR:${{ vars.REMOTE_APP_DIR }} # <-- IMPORTANT: Customize this path
 
     steps:
     - name: Checkout code from repository
@@ -37,8 +37,8 @@ jobs:
       # Use appleboy/ssh-action for easier multi-command execution
       uses: appleboy/ssh-action@v1.0.0
       with:
-        host: ${{ secrets.EC2_HOST_DEV }} 
-        username: ${{ secrets.EC2_USER }} # ubuntu
+        host: ${{ env.EC2_HOST }} 
+        username: ${{ env.EC2_USER }} # ubuntu
         key: ${{ secrets.EC2_SSH_PRIVATE_KEY_DEV }} 
         script: |
           echo "Connecting to EC2 instance: ${{ env.EC2_HOST }} as user: ${{ secrets.EC2_USER }}"
