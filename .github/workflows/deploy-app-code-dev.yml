@@ -63,7 +63,7 @@ jobs:
           echo "Building Docker Compose services..."
           # --no-cache ensures a fresh build, not using old layers
           # --pull ensures base images are pulled freshly
-          sudo docker compose up --build -d
+          docker-compose up --build -d
           echo "Docker Compose services built."
 
           echo "Deployment process completed successfully!"
