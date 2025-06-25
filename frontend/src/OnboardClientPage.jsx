@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getCsrfToken } from './csrf'; 
 
 const OnboardClientPage = () => {
   const [formData, setFormData] = useState({
@@ -9,30 +10,35 @@ const OnboardClientPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Helper: Update state when input values change
   const handleChange = ({ target: { name, value } }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Helper: Show notifications
   const setNotification = (successMsg = '', errorMsg = '') => {
     setSuccess(successMsg);
     setError(errorMsg);
   };
 
-  // Helper: Reusable API call
   const apiCall = async (url, method, body) => {
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      credentials: 'include',                 // send JWT cookies
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken()       
+      },
+      body: JSON.stringify(body)
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Request failed');
+
+    if (res.status === 401) {                 // unauthenticated
+      navigate('/', { replace: true });
+      throw new Error('Unauthenticated');
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
     return data;
   };
 
-  // Form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setNotification();

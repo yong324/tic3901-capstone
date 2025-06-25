@@ -13,6 +13,7 @@ const LoginPage = () => {
         try {
             const response = await fetch('http://localhost:5000/login', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -22,9 +23,11 @@ const LoginPage = () => {
             const data = await response.json();
 
             if (response.ok) {
+                setError('');
+                localStorage.setItem('username', username);
                 window.location.href = "/landingpage";
             } else {
-                setError(data.message);
+                setError(data.message || 'Login failed');
             }
         } catch (error) {
             console.error('Error:', error);
