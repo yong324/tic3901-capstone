@@ -1,13 +1,12 @@
-from playwright.sync_api import sync_playwright
+import re
+from playwright.sync_api import expect
 from utils import login
 
-def run(playwright):
-    browser = playwright.chromium.launch(headless=False)
-    page = browser.new_page()
-    
-    login(page)
+def test_login_success(page):
+    login(page, username="yong", password="password123")
+    expect(page).to_have_url(re.compile(r"/landingpage$"))
 
-    browser.close()
-
-with sync_playwright() as playwright:
-    run(playwright)
+def test_login_invalid_credentials(page):
+    login(page, username="yong", password="wrongpassword")
+    expect(page).to_have_url(re.compile(r"/"))
+    expect(page.get_by_text(re.compile(r"Invalid username or password", re.I))).to_be_visible()
