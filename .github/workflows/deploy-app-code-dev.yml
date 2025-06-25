@@ -1,0 +1,69 @@
+name: Deploy Docker App to EC2
+
+on:
+  push:
+    branches:
+      - dev 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest 
+
+    env:
+      # --- EC2 Connection Details (MUST be set as GitHub Secrets) ---
+      # Public IP address or DNS name of your EC2 instance
+      EC2_HOST: ${{ secrets.EC2_HOST_DEV }}
+      # Username to SSH into your EC2 instance (e.g., ec2-user, ubuntu, admin)
+      EC2_USER: ${{ secrets.EC2_USER }}
+      # Absolute path to your application's directory on the EC2 instance
+      # This is where your docker-compose.yml file and application code reside
+      REMOTE_APP_DIR: ${{ secrets.REMOTE_APP_DIR }} # <-- IMPORTANT: Customize this path
+
+    steps:
+    - name: Checkout code from repository
+      uses: actions/checkout@v4
+      # Note: This checks out the code to the GitHub Actions runner.
+      # The actual Git operations happen on the EC2 instance later.
+
+    - name: Setup SSH Agent for secure key handling
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        # Your SSH private key, stored securely as a GitHub Secret
+        ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY_DEV }}
+        # Note: If your private key requires a passphrase, this action might prompt.
+        # It's recommended to use a key without a passphrase for CI/CD automation.
+
+    - name: SSH into EC2 and run deployment commands
+      # Use appleboy/ssh-action for easier multi-command execution
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ env.EC2_HOST }} 
+        username: ${{ env.EC2_USER }} # ubuntu
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY_DEV }} 
+        script: |
+          echo "Connecting to EC2 instance: ${{ env.EC2_HOST }} as user: ${{ env.EC2_USER }}"
+
+          # Navigate to the application directory on EC2
+          cd ${{ env.REMOTE_APP_DIR }} # capstone_repo/tic3901-capstone
+          echo "Current directory on EC2: $(pwd)"
+
+          echo "Shutting down Docker Compose services..."
+          docker-compose down || true
+          # `|| true` ensures the step doesn't fail if containers aren't running (e.g., first deploy)
+          echo "Docker Compose services shut down."
+
+          # --- 2. Run git fetch to get latest code ---
+          echo "Fetching latest code from Git repository..."
+          # Ensure you are on the 'dev' branch on the EC2 instance
+          git checkout dev 
+          git pull origin dev
+          echo "Git repository updated to latest dev branch."
+
+          # --- 3. Run docker compose build ---
+          echo "Building Docker Compose services..."
+          # --no-cache ensures a fresh build, not using old layers
+          # --pull ensures base images are pulled freshly
+          docker-compose up --build -d
+          echo "Docker Compose services built."
+
+          echo "Deployment process completed successfully!"
