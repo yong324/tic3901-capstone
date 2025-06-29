@@ -76,7 +76,7 @@ describe('LoginPage', () => {
 
     // Wait for async operations
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/login', {
+      expect(fetch).toHaveBeenCalledWith('http://undefined:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

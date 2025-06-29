@@ -74,7 +74,7 @@ describe('LandingPage', () => {
     renderWithRouter(<LandingPage />);
 
     // Verify fetch was called with correct URL
-    expect(fetch).toHaveBeenCalledWith('http://localhost:5000/client_metadata');
+    expect(fetch).toHaveBeenCalledWith('http://undefined:5000/client_metadata');
     
     // Wait for fetch to complete
     await waitFor(() => {

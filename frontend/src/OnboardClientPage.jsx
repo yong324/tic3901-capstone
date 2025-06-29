@@ -8,6 +8,7 @@ const OnboardClientPage = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const backendIp = import.meta.env.VITE_BACKEND_IP;
 
   // Helper: Update state when input values change
   const handleChange = ({ target: { name, value } }) => {
@@ -44,7 +45,7 @@ const OnboardClientPage = () => {
     };
 
     try {
-      const data = await apiCall('http://localhost:5000/client', 'POST', payload);
+      const data = await apiCall(`http://${backendIp}:5000/client`, 'POST', payload);
       setNotification(data.message); // Inline success message
       setFormData({ clientName: '', clientEmail: '', sftpUserName: '' }); // Reset form
     } catch (err) {

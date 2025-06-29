@@ -5,6 +5,8 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
+    environment:
+      -DB_HOST=$DB_HOST
     ports:
       - "5000:5000"
     # volumes:
@@ -18,5 +20,7 @@ services:
       - "8080:8080"  # Serve React on port 3000
     depends_on:
       - backend
+    environment:
+      -VITE_BACKEND_IP=$PUBLIC_IP
     # volumes:
       # - ./frontend:/app  # Mount code for hot-reloading
