@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+const backendIp = import.meta.env.VITE_BACKEND_IP;
 
 const OnboardClientPage = () => {
   const [formData, setFormData] = useState({
@@ -44,7 +45,7 @@ const OnboardClientPage = () => {
     };
 
     try {
-      const data = await apiCall('http://localhost:5000/client', 'POST', payload);
+      const data = await apiCall(`http://${backendIp}:5000/client`, 'POST', payload);
       setNotification(data.message); // Inline success message
       setFormData({ clientName: '', clientEmail: '', sftpUserName: '' }); // Reset form
     } catch (err) {

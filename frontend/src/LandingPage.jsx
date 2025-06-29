@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const backendIp = import.meta.env.VITE_BACKEND_IP;
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState([]); // Renamed state variable to clients
@@ -9,7 +11,7 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/client_metadata'); // Updated endpoint
+        const response = await fetch(`http://${backendIp}:5000/client_metadata`); // Updated endpoint
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);

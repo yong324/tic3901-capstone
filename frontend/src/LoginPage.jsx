@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import { useNavigate } from 'react-router-dom';
+const backendIp = import.meta.env.VITE_BACKEND_IP;
 
 const LoginPage = () => {
     const [username, setUsername] = useState('');
@@ -11,7 +12,7 @@ const LoginPage = () => {
       e.preventDefault();
 
       try {
-          const response = await fetch('http://localhost:5000/login', {
+          const response = await fetch(`http://${backendIp}:5000/login`, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',

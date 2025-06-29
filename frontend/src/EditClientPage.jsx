@@ -9,6 +9,7 @@ const EditClientPage = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const clientNameInputRef = useRef(null);
+  const backendIp = import.meta.env.VITE_BACKEND_IP;
 
   useEffect(() => {
     if (editingClientId !== null && clientNameInputRef.current) {
@@ -19,7 +20,7 @@ const EditClientPage = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/client_metadata');
+        const response = await fetch(`http://${backendIp}:5000/client_metadata`);
         if (!response.ok) throw new Error('Failed to fetch client data');
         setClients(await response.json());
       } catch (err) {
@@ -28,7 +29,7 @@ const EditClientPage = () => {
     };
 
     fetchClients();
-  }, []);
+  }, [backendIp]);
 
   const setNotification = (success = '', err = '') => {
     setSuccessMessage(success);
@@ -77,7 +78,7 @@ const EditClientPage = () => {
     if (!window.confirm('Are you sure you want to save the changes?')) return;
 
     try {
-      await apiCall(`http://localhost:5000/client/${client_id}`, 'PUT', editedClient);
+      await apiCall(`http://${backendIp}:5000/client/${client_id}`, 'PUT', editedClient);
       setClients((prev) =>
         prev.map((client) => (client.client_id === client_id ? editedClient : client))
       );
@@ -98,7 +99,7 @@ const EditClientPage = () => {
     if (!window.confirm('Are you sure you want to delete this client?')) return;
 
     try {
-      await apiCall(`http://localhost:5000/client/${client_id}`, 'DELETE');
+      await apiCall(`http://${backendIp}:5000/client/${client_id}`, 'DELETE');
       setClients((prev) => prev.filter((client) => client.client_id !== client_id));
       setNotification('Client deleted successfully!');
     } catch (err) {
