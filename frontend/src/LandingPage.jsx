@@ -5,11 +5,12 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState([]); // Renamed state variable to clients
   const [error, setError] = useState('');
+  const backendIp = import.meta.env.VITE_BACKEND_IP;
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/client_metadata'); // Updated endpoint
+        const response = await fetch(`http://${backendIp}:5000/client_metadata`); // Updated endpoint
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
