@@ -11,7 +11,15 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch(`http://${backendIp}:5000/client_metadata`); // Updated endpoint
+        const response = await fetch(`http://${backendIp}:5000/client_metadata`, {
+          credentials: 'include',  // include JWT access cookie
+        });
+
+        if (response.status === 401) {
+          // Unauthenticated, redirect to login
+          navigate('/', { replace: true });
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);

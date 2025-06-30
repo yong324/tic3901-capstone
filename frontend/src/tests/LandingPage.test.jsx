@@ -98,40 +98,6 @@ describe('LandingPage', () => {
     removeItemSpy.mockRestore();
   });
 
-
-
-  //Removed as there is no more client table at Landing Page
-  /*it('fetches client data on mount', async () => {
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockClients)
-    });
-
-    renderWithRouter(<LandingPage />);
-
-    // Verify fetch was called with correct URL
-    expect(fetch).toHaveBeenCalledWith('http://localhost:5000/client_metadata', expect.objectContaining({
-      credentials: 'include'
-    }));
-    
-    // Wait for fetch to complete
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledTimes(1);
-    });
-  });*/
-
-  /* re-look into this error
-  it('handles fetch error gracefully', async () => {
-    fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
-
-    renderWithRouter(<LandingPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to fetch clients. Please try again later.')).toBeInTheDocument();
-    });
-  });
-    */
-
   it('navigates to onboard client page when clicking onboard button', async () => {
     await renderWithAct(<LandingPage />);
     
