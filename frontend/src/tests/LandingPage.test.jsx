@@ -43,6 +43,7 @@ describe('LandingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();     // Reset fetch mock default response
     fetch.mockReset();
+    localStorage.setItem('username', 'testuser');   // give a username for JWT
     fetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([])
@@ -55,7 +56,13 @@ describe('LandingPage', () => {
     
     await waitFor(() => {
       // Check for welcome messages
-      expect(screen.getByText('You have successfully logged in.')).toBeInTheDocument();
+      expect(
+        screen.getByText((content, element) =>
+          element.tagName.toLowerCase() === 'p' &&
+          content.includes('You have successfully logged in as') &&
+          element.textContent.includes('testuser')
+        )
+      ).toBeInTheDocument();
       expect(screen.getByText('Welcome to AssetProtect onboarding page!')).toBeInTheDocument();
       expect(screen.getByText("Please select what you'd like to do")).toBeInTheDocument();
       
@@ -65,7 +72,36 @@ describe('LandingPage', () => {
     });
   });
 
-  it('fetches client data on mount', async () => {
+  it('logs out the user and navigates to login page', async () => {
+    localStorage.setItem('username', 'testuser');
+
+    // Spy on localStorage.removeItem
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    // Mock fetch logout response
+    fetch.mockResolvedValueOnce({ ok: true });
+
+    await renderWithAct(<LandingPage />);
+
+    const logoutButton = screen.getByText('Logout');
+    fireEvent.submit(logoutButton.closest('form'));  // Simulate form submission
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      expect(removeItemSpy).toHaveBeenCalledWith('username');
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+    });
+
+    removeItemSpy.mockRestore();
+  });
+
+
+
+  //Removed as there is no more client table at Landing Page
+  /*it('fetches client data on mount', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockClients)
@@ -74,13 +110,16 @@ describe('LandingPage', () => {
     renderWithRouter(<LandingPage />);
 
     // Verify fetch was called with correct URL
-    expect(fetch).toHaveBeenCalledWith('http://localhost:5000/client_metadata');
+    expect(fetch).toHaveBeenCalledWith('http://localhost:5000/client_metadata', expect.objectContaining({
+      credentials: 'include'
+    }));
+
     
     // Wait for fetch to complete
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(1);
     });
-  });
+  });*/
 
   /* re-look into this error
   it('handles fetch error gracefully', async () => {
