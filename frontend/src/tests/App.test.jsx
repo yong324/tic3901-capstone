@@ -44,8 +44,6 @@ const renderWithRouter = (initialRoute = '/') =>
 beforeEach(() => setAuth());   //add auth before every test
 afterEach(() => clearAuth());  //tidy up after each test
 
-/* ─── tests ─── */
-
 it('renders login page at root route /', () => {
   clearAuth();
   renderWithRouter('/');
