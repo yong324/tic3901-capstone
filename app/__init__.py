@@ -27,7 +27,7 @@ def create_app(test_config=None):
 
         app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-secret-change-me')
         app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-        app.config['JWT_COOKIE_SECURE'] = not app.debug  # True in production only
+        app.config['JWT_COOKIE_SECURE'] = False
         app.config['JWT_COOKIE_SAMESITE'] = 'Lax'
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 600      # 10 min
         app.config['JWT_REFRESH_TOKEN_EXPIRES'] = 2592000 # 30 days
