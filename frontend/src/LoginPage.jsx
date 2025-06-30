@@ -6,12 +6,13 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const backendIp = import.meta.env.VITE_BACKEND_IP;
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:5000/login', {
+            const response = await fetch(`http://${backendIp}:5000/login`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

@@ -113,7 +113,6 @@ describe('LandingPage', () => {
     expect(fetch).toHaveBeenCalledWith('http://localhost:5000/client_metadata', expect.objectContaining({
       credentials: 'include'
     }));
-
     
     // Wait for fetch to complete
     await waitFor(() => {

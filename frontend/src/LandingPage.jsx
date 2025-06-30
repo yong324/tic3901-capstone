@@ -3,6 +3,29 @@ import { useNavigate } from 'react-router-dom';
 const LandingPage = () => {
   const navigate = useNavigate();
   const username = localStorage.getItem('username');  // retrieve username
+  const [clients, setClients] = useState([]); // Renamed state variable to clients
+  const [error, setError] = useState('');
+  const backendIp = import.meta.env.VITE_BACKEND_IP;
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch(`http://${backendIp}:5000/client_metadata`); // Updated endpoint
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setClients(data); // Update state with the fetched client metadata
+      } catch (err) {
+        console.error(err);
+        setError('Failed to fetch clients. Please try again later.');
+      }
+    };
+
+    fetchClients();
+  }, []);
 
   const onBoardClient = (e) => {
     e.preventDefault();
