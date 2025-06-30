@@ -8,7 +8,8 @@ def test_client():
     app = create_app({
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'JWT_SECRET_KEY': 'test-secret-jwt'
     })
 
     with app.test_client() as client:

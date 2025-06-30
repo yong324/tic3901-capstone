@@ -1,4 +1,4 @@
-# tests/playwright/utils.py
+
 def login(page, username="yong", password="password123"):
     """Reusable login function for all tests"""
     page.goto("http://localhost:8080/")
