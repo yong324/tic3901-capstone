@@ -30,7 +30,7 @@ jobs:
         working-directory: ./app
         run: |
           source venv/bin/activate
-          pytest
+          pytest --cov=. --cov-fail-under=100
 
       - name: Install lambda functions unit tests dependencies
         working-directory: ./awsLambdaFunctions/tests
@@ -43,7 +43,7 @@ jobs:
         working-directory: ./awsLambdaFunctions/tests
         run: |
           source venv/bin/activate
-          pytest
+          pytest --cov=. --cov-fail-under=100
 
       # Setup Node.js
       - name: Set up Node.js
