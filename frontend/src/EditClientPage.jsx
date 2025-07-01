@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCsrfToken } from './csrf';   
 
 const EditClientPage = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const EditClientPage = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const clientNameInputRef = useRef(null);
+  const backendIp = import.meta.env.VITE_BACKEND_IP;
 
   useEffect(() => {
     if (editingClientId !== null && clientNameInputRef.current) {
@@ -19,17 +21,24 @@ const EditClientPage = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/client_metadata');
-        if (!response.ok) throw new Error('Failed to fetch client data');
-        setClients(await response.json());
+        const res = await fetch(`http://${backendIp}:5000/client_metadata`, {
+          credentials: 'include'              //send JWT cookies
+        });
+
+        if (res.status === 401) {             //unauthenticated, redirect to login
+          navigate('/', { replace: true });
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to fetch client data');
+        setClients(await res.json());
       } catch (err) {
         setError(err.message);
       }
     };
 
     fetchClients();
-  }, []);
-
+  }, [navigate], [backendIp]);
+  
   const setNotification = (success = '', err = '') => {
     setSuccessMessage(success);
     setError(err);
@@ -47,9 +56,7 @@ const EditClientPage = () => {
 
   const isDuplicateClientName = (client_id) => {
     const duplicate = clients.find(
-      (client) =>
-        client.client_name === editedClient.client_name &&
-        client.client_id !== client_id
+      (c) => c.client_name === editedClient.client_name && c.client_id !== client_id
     );
     if (duplicate) {
       setError('Failed to edit: Client name must be unique. This client name already exists.');
@@ -61,15 +68,22 @@ const EditClientPage = () => {
   const apiCall = async (url, method, body = null) => {
     const options = {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',               // include JWT cookies
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
       ...(body && { body: JSON.stringify(body) }),
     };
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(errorData.error || errorData.message || 'Operation failed');
+
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {               // token expired, redirect to login
+      navigate('/', { replace: true });
+      throw new Error('Unauthenticated');
     }
-    return response.json();
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errData.error || errData.message || 'Operation failed');
+    }
+    return res.json();
   };
 
   const handleSaveClick = async (client_id) => {
@@ -77,9 +91,9 @@ const EditClientPage = () => {
     if (!window.confirm('Are you sure you want to save the changes?')) return;
 
     try {
-      await apiCall(`http://localhost:5000/client/${client_id}`, 'PUT', editedClient);
+      await apiCall(`http://${backendIp}:5000/client/${client_id}`, 'PUT', editedClient);
       setClients((prev) =>
-        prev.map((client) => (client.client_id === client_id ? editedClient : client))
+        prev.map((c) => (c.client_id === client_id ? editedClient : c))
       );
       setEditingClientId(null);
       setNotification('Client updated successfully!');
@@ -98,8 +112,9 @@ const EditClientPage = () => {
     if (!window.confirm('Are you sure you want to delete this client?')) return;
 
     try {
-      await apiCall(`http://localhost:5000/client/${client_id}`, 'DELETE');
-      setClients((prev) => prev.filter((client) => client.client_id !== client_id));
+      await apiCall(`http://${backendIp}:5000/client/${client_id}`, 'DELETE');
+      setClients((prev) => prev.filter((c) => c.client_id !== client_id));
+
       setNotification('Client deleted successfully!');
     } catch (err) {
       setError(`Failed to delete: ${err.message}`);
