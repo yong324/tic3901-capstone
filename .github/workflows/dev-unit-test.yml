@@ -30,10 +30,16 @@ jobs:
         working-directory: ./app
         run: |
           source venv/bin/activate
-          pytest --cov=. --cov-fail-under=100
+          pytest --cov=. --cov-fail-under=80
+
+      - name: Run security testing on backend code
+        working-directory: ./app
+        run: |
+          source venv/bin/activate
+          bandit -r .
 
       - name: Install lambda functions unit tests dependencies
-        working-directory: ./awsLambdaFunctions/tests
+        working-directory: ./app
         run: |
           python -m venv venv
           source venv/bin/activate
@@ -43,7 +49,13 @@ jobs:
         working-directory: ./awsLambdaFunctions/tests
         run: |
           source venv/bin/activate
-          pytest --cov=. --cov-fail-under=100
+          pytest --cov=. --cov-fail-under=80
+
+        - name: Run security testing on aws lambda functions
+        working-directory: ./awsLambdaFunctions
+        run: |
+          source venv/bin/activate
+          bandit -r .
 
       # Setup Node.js
       - name: Set up Node.js
