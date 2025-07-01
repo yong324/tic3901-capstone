@@ -51,7 +51,7 @@ jobs:
           source venv/bin/activate
           pytest --cov=. --cov-fail-under=80
 
-        - name: Run security testing on aws lambda functions
+      - name: Run security testing on aws lambda functions
         working-directory: ./awsLambdaFunctions
         run: |
           source venv/bin/activate
