@@ -55,17 +55,7 @@ describe('EditClientPage', () => {
       expect(screen.getByText('Test Client 2')).toBeInTheDocument();
     });
   });
-  /* commenting out as this is causing errors
-  it('handles fetch error gracefully', async () => {
-    fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
-    
-    renderWithRouter(<EditClientPage />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Failed to fetch')).toBeInTheDocument();
-    });
-  });
-*/
+
   it('enables editing mode when Edit button is clicked', async () => {
     renderWithRouter(<EditClientPage />);
     
