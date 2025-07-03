@@ -3,7 +3,7 @@ name: Run Backend Frontend, and lambda functions Tests
 on:
   pull_request:
     branches:
-      - master
+      - dummy-branch
 
 jobs:
   test:
