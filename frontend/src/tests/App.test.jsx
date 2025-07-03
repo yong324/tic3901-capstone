@@ -47,7 +47,7 @@ afterEach(() => clearAuth());  //tidy up after each test
 it('renders login page at root route /', () => {
   clearAuth();
   renderWithRouter('/');
-  expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Login!' })).toBeInTheDocument();
 });
 
 it('renders landing page at /landingpage route', () => {
