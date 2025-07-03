@@ -38,18 +38,18 @@ const LoginPage = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px' }}>
-            <h1>Login.</h1>
+            <h1>Login</h1>
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
                 <input
                     type="text"
-                    placeholder="Username"
+                    placeholder="Username!"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{ marginBottom: '10px', padding: '10px', fontSize: '16px' }}
                 />
                 <input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Password!"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{ marginBottom: '10px', padding: '10px', fontSize: '16px' }}
