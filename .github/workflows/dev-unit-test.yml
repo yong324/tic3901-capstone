@@ -34,15 +34,16 @@ jobs:
 
       - name: Run security testing on backend code
         working-directory: ./app
-        run: |
-          source venv/bin/activate
+        # run: |
+        #     echo A
+      #     source venv/bin/activate
 
       - name: Install lambda functions unit tests dependencies
         working-directory: ./app
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #     pip install -r requirements.txt
 
       - name: Run aws lambda functions unit tests
         working-directory: ./awsLambdaFunctions/tests
@@ -51,8 +52,8 @@ jobs:
 
       - name: Run security testing on aws lambda functions
         working-directory: ./awsLambdaFunctions
-        run: |
-          source venv/bin/activate
+        # run: |
+        #   source venv/bin/activate
 
       # Setup Node.js
       - name: Set up Node.js
