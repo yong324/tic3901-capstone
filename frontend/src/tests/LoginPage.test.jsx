@@ -36,8 +36,8 @@ describe('LoginPage', () => {
     renderWithRouter(<LoginPage />)
     
     // Check if all form elements are present
-    expect(screen.getByPlaceholderText('Username!')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Password!')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Username')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument()
   })
 
