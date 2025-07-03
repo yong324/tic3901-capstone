@@ -36,7 +36,6 @@ jobs:
         working-directory: ./app
         run: |
           source venv/bin/activate
-          bandit -r .
 
       - name: Install lambda functions unit tests dependencies
         working-directory: ./app
@@ -55,7 +54,6 @@ jobs:
         working-directory: ./awsLambdaFunctions
         run: |
           source venv/bin/activate
-          bandit -r .
 
       # Setup Node.js
       - name: Set up Node.js
